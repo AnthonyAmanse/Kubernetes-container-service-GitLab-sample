@@ -10,8 +10,13 @@ spec:
     - name: gitlab-ui
       port: 80
       protocol: TCP
-      targetPort: 30080
+      targetPort: 80
       nodePort: 30080
+    # - name: gitlab-ui-https
+    #   port: 443
+    #   protocol: TCP
+    #   targetPort: 443
+    #   nodePort: 30443
     - name: gitlab-ssh
       port: 22
       protocol: TCP
@@ -20,7 +25,7 @@ spec:
   selector:
     app: gitlab
     tier: frontend
-  type: NodePort
+  type: LoadBalancer
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -67,11 +72,17 @@ spec:
                 redis['enable'] = false
                 gitlab_rails['redis_host'] = 'redis'
                 gitlab_rails['redis_port'] = '6379'
-                gitlab_rails['gitlab_shell_ssh_port'] = 30022
-                external_url 'http://gitlab.example.com:30080'
+                gitlab_rails['gitlab_shell_ssh_port'] = 22
+                nginx['listen_port'] = 80
+                nginx['listen_https'] = false
+                external_url 'https://gitlab-staging-demo.us-south.containers.mybluemix.net'
           ports:
-            - containerPort: 30080
+            - containerPort: 80
               name: gitlab
+            # - containerPort: 443
+            #   name: gitlab-https
+            - containerPort: 22
+              name: gitlab-ssh
           volumeMounts:
             - name: gitlab
               mountPath: /var/opt/gitlab
@@ -79,7 +90,18 @@ spec:
             - name: gitlab
               mountPath: /etc/gitlab
               subPath: gitlab_configuration
+            # - name: certificates
+            #   mountPath: /etc/gitlab/ssl
+            #   readOnly: true
       volumes:
         - name: gitlab
           persistentVolumeClaim:
             claimName: gitlab-claim
+        # - name: certificates
+        #   secret:
+        #     secretName: gitlab-staging-demo
+        #     items:
+        #       - key: tls.crt
+        #         path: gitlab-staging-demo.us-south.containers.mybluemix.net.crt
+        #       - key: tls.key
+        #         path: gitlab-staging-demo.us-south.containers.mybluemix.net.key

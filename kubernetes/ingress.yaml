@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+  name: ingress
+spec:
+  tls:
+  - hosts:
+    - gitlab-staging-demo.us-south.containers.mybluemix.net
+    secretName: gitlab-staging-demo
+  backend:
+    serviceName: gitlab
+    servicePort: 80
+  rules:
+  - host: gitlab-staging-demo.us-south.containers.mybluemix.net
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gitlab
+          servicePort: 80
