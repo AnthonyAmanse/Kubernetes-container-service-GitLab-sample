@@ -8,8 +8,9 @@ source "$(dirname "$0")"/../scripts/resources.sh
 
 kubeclt_clean() {
     echo "Cleaning cluster"
+    kubectl delete pvc,deployment,service,replicaset -l app=gitlab
+    sleep 30s
     kubectl delete pv local-volume-1 local-volume-2 local-volume-3
-    kubectl delete deployment,service,pvc,replicaset -l app=gitlab
 }
 
 kubectl_config() {
@@ -27,9 +28,10 @@ kubectl_deploy() {
 
     echo "Waiting for pods to be running"
     i=0
-    while [[ $(kubectl get pods | grep -c Running) -ne 3 ]]; do
+    while [[ $(kubectl get pods -l app=gitlab | grep -c Running) -ne 3 ]]; do
         if [[ ! "$i" -lt 24 ]]; then
             echo "Timeout waiting on pods to be ready"
+            kubectl get pods -a
             test_failed "$0"
         fi
         sleep 10
